@@ -29,6 +29,9 @@ class MainActivity : AppCompatActivity() {
         val errorLayout: View = findViewById(R.id.error_fr)
         val webLayout: SwipeRefreshLayout = findViewById(R.id.web_fr)
 
+        webLayout.setColorSchemeResources(R.color.colorPrimary, R.color.colorPrimaryDark)
+
+
         val btnReload: Button = errorLayout.findViewById(R.id.btn_reload)
 
         webView = webLayout.findViewById(R.id.webv)
