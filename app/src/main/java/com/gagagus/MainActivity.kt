@@ -1,33 +1,35 @@
 package com.gagagus
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.os.Bundle
 import android.view.View
-import android.view.ViewGroup
-import android.view.animation.AnimationUtils.loadAnimation
-import android.webkit.WebSettings
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import android.webkit.*
+import android.widget.Button
+import android.widget.Toast
+import android.widget.ViewFlipper
 import androidx.appcompat.app.AppCompatActivity
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var root: ViewGroup
-    private var init = true
+
+    private var attachWeb = false
     lateinit var webView: WebView
+    lateinit var viewFlipper: ViewFlipper
 
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.main_fragment)
-        init = true
-        root = findViewById(R.id.main_bg)
+        setContentView(R.layout.main_container)
 
-        val loadingLayout = layoutInflater.inflate(R.layout.splash_fragment, root, false)
-        val webLayout = layoutInflater.inflate(R.layout.webview_fragment, root, false)
+        viewFlipper = findViewById(R.id.container)
+
+        val errorLayout: View = findViewById(R.id.error_fr)
+        val webLayout: SwipeRefreshLayout = findViewById(R.id.web_fr)
+
+        val btnReload: Button = errorLayout.findViewById(R.id.btn_reload)
 
         webView = webLayout.findViewById(R.id.webv)
         webView.settings.javaScriptEnabled = true
@@ -40,22 +42,46 @@ class MainActivity : AppCompatActivity() {
         webView.webViewClient = object : WebViewClient() {
 
             override fun onPageFinished(view: WebView?, url: String?) {
-                if (init) {
-                    setRootContent(
-                        loadingLayout,
-                        webLayout,
-                        R.anim.fade_in,
-                        R.anim.fade_out,
-                        0,
-                        1500
-                    )
-                    init = false
+                if (attachWeb) {
+                    viewFlipper.displayedChild = 1
+                    attachWeb = false
                 }
+                webLayout.isRefreshing = false
+            }
+
+            override fun onReceivedError(
+                view: WebView?,
+                request: WebResourceRequest?,
+                error: WebResourceError?
+            ) {
+                attachWeb = false
+                webView.visibility = View.INVISIBLE
+                viewFlipper.displayedChild = 2
+            }
+
+            override fun onReceivedHttpError(
+                view: WebView?,
+                request: WebResourceRequest?,
+                errorResponse: WebResourceResponse?
+            ) {
+                super.onReceivedHttpError(view, request, errorResponse)
+                Toast.makeText(
+                    applicationContext,
+                    errorResponse?.statusCode.toString(),
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
 
-        webView.loadUrl(resources.getString(R.string.url))
-        setRootContent(null, loadingLayout, R.anim.fade_in, 0, 500, 0)
+        btnReload.setOnClickListener {
+            webThrowLoading(true)
+        }
+
+        webLayout.setOnRefreshListener {
+            webView.reload()
+        }
+
+        webThrowLoading(false)
     }
 
     override fun onBackPressed() {
@@ -64,30 +90,16 @@ class MainActivity : AppCompatActivity() {
         else super.onBackPressed()
     }
 
-    private fun setRootContent(
-        old: View?,
-        new: View,
-        inAnim: Int,
-        outAnim: Int,
-        inDuration: Long,
-        outDuration: Long
-    ) {
+    private fun webThrowLoading(reload: Boolean) {
+        attachWeb = true
 
-        if (old != null) {
-            playAnim(old, this, outAnim, outDuration)
-            val idx = root.indexOfChild(old)
-            root.removeView(old)
-            root.addView(new, idx)
-        } else {
-            root.addView(new)
-        }
-        playAnim(new, this, inAnim, inDuration)
+        webView.visibility = View.VISIBLE
+
+        if (reload)
+            webView.reload()
+        else
+            webView.loadUrl(resources.getString(R.string.url))
+
+        viewFlipper.displayedChild = 0
     }
-
-    private fun playAnim(view: View, context: Context, animationid: Int, duration: Long) {
-        val animation = loadAnimation(context, animationid)
-        animation.duration = duration
-        view.startAnimation(animation)
-    }
-
 }
