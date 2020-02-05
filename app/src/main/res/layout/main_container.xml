@@ -21,6 +21,7 @@
         <include
             android:id="@+id/error_fr"
             layout="@layout/error_fragment" />
+
     </ViewFlipper>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

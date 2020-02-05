@@ -9,4 +9,9 @@
         <item name="android:windowLightStatusBar">true</item>
     </style>
 
+
+    <style name="MyProgressBarCircular" parent="@style/Widget.AppCompat.ProgressBar">
+        <item name="android:indeterminateTint">@color/colorPrimary</item>
+    </style>
+
 </resources>

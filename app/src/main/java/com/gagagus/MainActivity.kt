@@ -1,8 +1,12 @@
 package com.gagagus
 
 import android.annotation.SuppressLint
+import android.app.Dialog
+import android.graphics.Bitmap
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.os.Handler
+import android.provider.Settings
 import android.view.View
 import android.webkit.*
 import android.widget.Button
@@ -107,19 +111,27 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    @SuppressLint("SetJavaScriptEnabled")
+    @SuppressLint("SetJavaScriptEnabled", "HardwareIds")
     override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.main_container)
+
+
+        val androidId: String = Settings.Secure.getString(
+            contentResolver,
+            Settings.Secure.ANDROID_ID
+        )
+        //Toast.makeText(this, androidId, Toast.LENGTH_SHORT).show()
+
+
+        val dialog = Dialog(this, android.R.style.Theme_Light)
+
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         mVisible = true
 
 
-
-
-
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.main_container)
 
         viewFlipper = findViewById(R.id.container)
 
@@ -142,6 +154,17 @@ class MainActivity : AppCompatActivity() {
         webView.webViewClient = object : WebViewClient() {
 
 
+            override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                super.onPageStarted(view, url, favicon)
+                //Toast.makeText(applicationContext, "Start loading", Toast.LENGTH_SHORT).show()
+
+                if (!attachWeb) {
+                    dialog.window?.setBackgroundDrawable(ColorDrawable(getColor(R.color.darkTransparent)))
+                    dialog.setContentView(layoutInflater.inflate(R.layout.loading_frame, null))
+                    dialog.show()
+                }
+            }
+
             override fun onPageFinished(view: WebView?, url: String?) {
 
                 if (attachWeb) {
@@ -149,6 +172,7 @@ class MainActivity : AppCompatActivity() {
                     show()
                     attachWeb = false
                 }
+                dialog.hide()
                 webLayout.isRefreshing = false
             }
 
